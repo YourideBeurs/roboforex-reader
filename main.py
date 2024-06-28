@@ -17,9 +17,6 @@ def main():
   Lists the user's Gmail labels.
   """
   creds = None
-  label = 'INBOX'
-  label = 'RoboForex'
-#   query = f'in:{label}'
   query_from = 'ENTER YOUR EMAIL HERE'
   query_subject = 'Daily Confirmation'
 
@@ -50,10 +47,7 @@ def main():
     service = build("gmail", "v1", credentials=creds)
 
     results = service.users().messages().list(userId='me', q=query).execute()
-    # results = service.users().messages().list(userId='me', labelIds=['INBOX']).execute()
     messages = results.get('messages',[])
-    # results = service.users().labels().list(userId="me").execute()
-    # labels = results.get("labels", [])
 
     if not messages:
       print('No new messages.')
@@ -72,54 +66,12 @@ def main():
         date = datetime.datetime.strptime(date, date_format)
         # print(f"Parsed date: {parsed_date}")
 
-        match = re.search('Balance: (.*)\s+Margin', text)
+        match = re.search(r'Balance: (.*)\s+Margin', text)
         balance = match.group(1)
         balance = balance.replace(' ', '')
         balance = float(balance)
-        # print(balance)
-        # double_value = float(balance)
-        # print(f"Converted double value: {double_value}")
 
-        # print(f"[{date}] {balance}")
-
-        # Add the combined result to the list
         combined_results.append((date, balance))
-
-        # print ("This is the message: "+ str(text))
-
-        # email_body = msg['payload']['body']['data']  # Get the entire email body
-
-        # # Decode the base64-encoded email body
-        # decoded_body = base64.urlsafe_b64decode(email_body).decode('utf-8')
-
-        # # Print the entire email text
-        # print('Email Text:')
-        # print(decoded_body)
-        
-        # email_data = msg['payload']['headers']
-        # for values in email_data:
-        #     name = values['name']
-        #     if name == 'From':
-        #         from_name= values['value']
-        #         print('From: ' + from_name)           
-                # for part in msg['payload']['parts']:
-                #     try:
-                #         data = part['body']["data"]
-                #         byte_code = base64.urlsafe_b64decode(data)
-
-                #         text = byte_code.decode("utf-8")
-                #         print ("This is the message: "+ str(text))
-
-                #         # mark the message as read (optional)
-                #         msg  = service.users().messages().modify(userId='me', id=message['id'], body={'removeLabelIds': ['UNREAD']}).execute()                                                       
-                #     except BaseException as error:
-                #         pass             
-    # if not labels:
-    #   print("No labels found.")
-    #   return
-    # print("Labels:")
-    # for label in labels:
-    #   print(label["name"])
 
     # Sort the combined results by date
     sorted_results = sorted(combined_results, key=lambda x: x[0])
