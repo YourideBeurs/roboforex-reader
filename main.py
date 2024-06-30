@@ -2,6 +2,7 @@ import os.path
 import base64
 import re
 import datetime
+from export import export_to_xlsx
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -10,7 +11,6 @@ from googleapiclient.errors import HttpError
 
 # If modifying these scopes, delete the file token.json.
 SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
-
 
 def main():
   """Shows basic usage of the Gmail API.
@@ -53,7 +53,7 @@ def main():
       print('No new messages.')
     else:
       for message in messages:
-        msg = service.users().messages().get(userId='me', id=message['id']).execute()                
+        msg = service.users().messages().get(userId='me', id=message['id']).execute()
         data = msg['payload']['parts'][0]['body']['data']
         byte_code = base64.urlsafe_b64decode(data)
         text = byte_code.decode("utf-8")
@@ -61,28 +61,30 @@ def main():
         match = re.search('\*ENTER YOUR NAME HERE\*\s+(.+),', text)
         date = match.group(1)
         date_format = "%Y %B %d"
-
-        # print(date)
+        date = match.group(1)
         date = datetime.datetime.strptime(date, date_format)
-        # print(f"Parsed date: {parsed_date}")
 
         match = re.search(r'Balance: (.*)\s+Margin', text)
         balance = match.group(1)
         balance = balance.replace(' ', '')
         balance = float(balance)
-
-        combined_results.append((date, balance))
+ 
+        matches = re.findall(r'Deposit/Withdrawal: (.*)\s+Equity', text)
+        
+        deposit_withdrawal = matches[-1]
+  
+        deposit_withdrawal = deposit_withdrawal.replace(' ', '')
+        deposit_withdrawal = float(deposit_withdrawal)
+        combined_results.append((date, balance, deposit_withdrawal))
 
     # Sort the combined results by date
     sorted_results = sorted(combined_results, key=lambda x: x[0])
-    for date, balance in sorted_results:
-        print(f"[{date}] {balance}")
 
+    export_to_xlsx(filename="export.xlsx", data=sorted_results)
 
   except HttpError as error:
     # TODO(developer) - Handle errors from gmail API.
     print(f"An error occurred: {error}")
-
 
 if __name__ == "__main__":
   main()
